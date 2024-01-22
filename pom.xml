@@ -19,7 +19,7 @@
 
     <properties>
         <!-- FIXME Fill in these properties - they need to be lowercase -->
-        <yourteam>shaun</yourteam>
+        <yourteam>benandollie</yourteam>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
@@ -30,7 +30,7 @@
             <id>github</id>
             <name>GitHub Packages</name>
             <!-- FIXME Fill in these properties -->
-            <url>https://maven.pkg.github.com/YOUR_GITHUB_USERNAME/YOUR_PROJECT_NAME</url>
+            <url>https://maven.pkg.github.com/ben-lock71/connect-n-ben-ollie</url>
         </repository>
     </distributionManagement>
 
@@ -56,7 +56,7 @@
         <dependency>
             <groupId>com.github.THG-accelerator</groupId>
             <artifactId>connectn-player</artifactId>
-            <version>1.5</version>
+            <version>1.6</version>
         </dependency>
     </dependencies>
 
