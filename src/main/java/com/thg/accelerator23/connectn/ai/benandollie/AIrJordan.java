@@ -22,7 +22,7 @@ public class AIrJordan extends Player {
     StringBuilder boardState = new StringBuilder();
     StringBuilder XState = new StringBuilder();
     try {
-      Method getCounterBoard = board.getClass().getDeclaredMethod("getCounterPlacements", Board.class);
+      Method getCounterBoard = board.getClass().getDeclaredMethod("getCounterPlacements");
       getCounterBoard.setAccessible(true);
       Counter[][] counters = (Counter[][]) getCounterBoard.invoke(null, board);
       List<List<Counter>> columns = Arrays.stream(counters)
