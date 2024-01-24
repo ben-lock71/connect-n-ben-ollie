@@ -4,56 +4,58 @@ import com.thg.accelerator23.connectn.ai.benandollie.AIrJordan;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
+import static com.thg.accelerator23.connectn.ai.benandollie.AIrJordan.winCheck;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class AIrJordanTest {
 
   @Test
   public void VerticalWinTest() {
-    String XMoves = "";
-    String OMoves = "00001111000000001100000000000000110000001100000000000000110000001100000011100000";
-    HashMap<String, String> boardState= new HashMap<>(2);
-    boardState.put("X", XMoves);
-    boardState.put("O", OMoves);
-    assertTrue(AIrJordan.winCheck(boardState));
+    StringBuilder XMoves = new StringBuilder();
+    StringBuilder OMoves = new StringBuilder("00001111000000001100000000000000110000001100000000000000110000001100000011100000");
+    HashSet<StringBuilder> boardState= new HashSet<>(2);
+    boardState.add(XMoves);
+    boardState.add(OMoves);
+    assertTrue(winCheck(boardState));
   }
 
   @Test
   public void NoVerticalWinAcrossColumns() {
-    String XMoves = "00000111100000001100000000000000110000001100000000000000110000001100000011100000";
-    String OMoves = "";
-    HashMap<String, String> boardState= new HashMap<>(2);
-    boardState.put("X", XMoves);
-    boardState.put("O", OMoves);
-    assertFalse(AIrJordan.winCheck(boardState));
+    StringBuilder XMoves = new StringBuilder("00000111100000001100000000000000110000001100000000000000110000001100000011100000");
+    StringBuilder OMoves = new StringBuilder();
+    HashSet<StringBuilder> boardState= new HashSet<>(2);
+    boardState.add(XMoves);
+    boardState.add(OMoves);
+    assertFalse(winCheck(boardState));
   }
 
   @Test
   public void HorizontalWinTest() {
-    String XMoves = "00001101000000011100000100000000110000001100000000000001110000011100000111100001";
-    String OMoves = "";
-    HashMap<String, String> boardState= new HashMap<>(2);
-    boardState.put("X", XMoves);
-    boardState.put("O", OMoves);
-    assertTrue(AIrJordan.winCheck(boardState));
+    StringBuilder XMoves = new StringBuilder("00001101000000011100000100000000110000001100000000000001110000011100000111100001");
+    StringBuilder OMoves = new StringBuilder();
+    HashSet<StringBuilder> boardState= new HashSet<>(2);
+    boardState.add(XMoves);
+    boardState.add(OMoves);
+    assertTrue(winCheck(boardState));
   }
 
   @Test
   public void DiagonalLTRWinTest() {
-    String XMoves = "10001101010000011110000100010000110000001100000000000001110000011100000111100001";
-    String OMoves = "";
-    HashMap<String, String> boardState= new HashMap<>(2);
-    boardState.put("X", XMoves);
-    boardState.put("O", OMoves);
+    StringBuilder XMoves = new StringBuilder("10001101010000011110000100010000110000001100000000000001110000011100000111100001");
+    StringBuilder OMoves = new StringBuilder();
+    HashSet<StringBuilder> boardState= new HashSet<>(2);
+    boardState.add(XMoves);
+    boardState.add(OMoves);
     assertTrue(AIrJordan.winCheck(boardState));
   }    @Test
   public void DiagonalRTLWinTest() {
-    String XMoves = "10001101000000111110010100011000110000001100000000000001110000011100000111100001";
-    String OMoves = "";
-    HashMap<String, String> boardState= new HashMap<>(2);
-    boardState.put("X", XMoves);
-    boardState.put("O", OMoves);
+    StringBuilder XMoves = new StringBuilder("10001101000000111110010100011000110000001100000000000001110000011100000111100001");
+    StringBuilder OMoves = new StringBuilder();
+    HashSet<StringBuilder> boardState= new HashSet<>(2);
+    boardState.add(XMoves);
+    boardState.add(OMoves);
     assertTrue(AIrJordan.winCheck(boardState));
   }
 }

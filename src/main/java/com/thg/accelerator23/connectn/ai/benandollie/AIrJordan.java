@@ -7,10 +7,7 @@ import com.thehutgroup.accelerator.connectn.player.Position;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 
 public class AIrJordan extends Player {
@@ -18,12 +15,11 @@ public class AIrJordan extends Player {
     super(counter, "AIrJordan");
   }
 
-  private HashMap<String, String> makeBitBoard(Board board) {
+  private HashSet<StringBuilder> makeBitBoard(Board board) {
     StringBuilder boardState = new StringBuilder();
     StringBuilder XState = new StringBuilder();
     try {
       Method getCounterBoard = board.getClass().getDeclaredMethod("getCounterPlacements");
-      getCounterBoard.setAccessible(true);
       Counter[][] counters = (Counter[][]) getCounterBoard.invoke(board);
       List<List<Counter>> columns = Arrays.stream(counters)
               .map(Arrays::asList).toList();
@@ -45,27 +41,23 @@ public class AIrJordan extends Player {
     } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
       throw new RuntimeException(e);
     }
-    String s1 = String.valueOf(boardState);
-    String s2 = String.valueOf(XState);
     StringBuilder OMoves = new StringBuilder();
-    for (int i = 0; i < s1.length(); i++) {
-      OMoves.append(s1.charAt(i) ^ s2.charAt(i));
+    for (int i = 0; i < boardState.length(); i++) {
+      OMoves.append(boardState.charAt(i) ^ XState.charAt(i));
     }
-    int length = OMoves.length();
-    for (int i = 0; i < length; i += 8) {
-      System.out.println(boardState.substring(i, i + 8));
-    }
-    HashMap<String, String> boardMap = new HashMap<>(2);
-    boardMap.put("X", String.valueOf(XState));
-    boardMap.put("O", String.valueOf(OMoves));
+    HashSet<StringBuilder> boardMap = new HashSet<>(2);
+    boardMap.add(XState);
+    boardMap.add(OMoves);
     return boardMap;
   }
 
-  public static boolean winCheck(HashMap<String, String> bitBoard) {
-    for (String counterBoard : bitBoard.values()) {
+  public static boolean winCheck(HashSet<StringBuilder> bitBoard) {
+    for (StringBuilder counterBoard : bitBoard) {
+      char[] board = String.valueOf(counterBoard).toCharArray();
+      int boardLength = board.length;
       //Vertical win
-      for (int i = 0; i < counterBoard.length(); i += 8) {
-        char[] row = counterBoard.substring(i, i + 8).toCharArray();
+      for (int i = 0; i < boardLength; i += 8) {
+        char[] row = Arrays.copyOfRange(board, i, i+8);
         for (int j = 0; j < row.length - 3; j++) {
           if (row[j] == '1' && row[j + 1] == '1' && row[j + 2] == '1' && row[j + 3] == '1') {
             return true;
@@ -73,20 +65,19 @@ public class AIrJordan extends Player {
         }
       }
       //Horizontal win
-      char[] board = counterBoard.toCharArray();
-      for (int i = 0; i < counterBoard.length() - 24; i++) {
+      for (int i = 0; i < boardLength - 24; i++) {
         if (board[i] == '1' && board[i + 8] == '1' && board[i + 16] == '1' && board[i + 24] == '1') {
           return true;
         }
       }
       //Diagonal win left-to-right
-      for (int i = 0; i < counterBoard.length() - 30; i++) {
+      for (int i = 0; i < boardLength - 30; i++) {
         if (board[i] == '1' && board[i + 9] == '1' && board[i + 19] == '1' && board[i + 30] == '1') {
           return true;
         }
       }
       //Diagonal win right-to-left
-      for (int i = 0; i < counterBoard.length() - 18; i++) {
+      for (int i = 0; i < boardLength - 18; i++) {
         if (board[i] == '1' && board[i + 7] == '1' && board[i + 13] == '1' && board[i + 18] == '1') {
           return true;
         }
