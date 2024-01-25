@@ -132,6 +132,9 @@ public class AIrJordan extends Player {
                 break;
             }
         }
+        if (bestMove == -1 || !isValidMove(board, new Position(bestMove, 7))) {
+            return makeRandomMove(board);
+        }
         return bestMove;
     }
 
