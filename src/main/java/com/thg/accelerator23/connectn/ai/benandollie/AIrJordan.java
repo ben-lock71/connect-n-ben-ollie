@@ -7,10 +7,8 @@ import com.thehutgroup.accelerator.connectn.player.Position;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
+import java.math.BigInteger;
+import java.util.*;
 
 
 public class AIrJordan extends Player {
@@ -20,49 +18,50 @@ public class AIrJordan extends Player {
         super(counter, "AIrJordan");
     }
 
-    public static boolean winCheck(HashSet<StringBuilder> bitBoard) {
-        for (StringBuilder counterBoard : bitBoard) {
-            char[] board = String.valueOf(counterBoard).toCharArray();
-            int boardLength = board.length;
-            //Vertical win
-            for (int i = 0; i < boardLength; i += 8) {
-                char[] row = Arrays.copyOfRange(board, i, i + 8);
-                for (int j = 0; j < row.length - 3; j++) {
-                    if (row[j] == '1' && row[j + 1] == '1' && row[j + 2] == '1' && row[j + 3] == '1') {
-                        return true;
-                    }
-                }
-            }
-            //Horizontal win
-            for (int i = 0; i < boardLength - 24; i++) {
-                if (board[i] == '1' && board[i + 8] == '1' && board[i + 16] == '1' && board[i + 24] == '1') {
-                    return true;
-                }
-            }
-            //Diagonal win left-to-right
-            for (int i = 0; i < boardLength - 30; i++) {
-                if (board[i] == '1' && board[i + 9] == '1' && board[i + 19] == '1' && board[i + 30] == '1') {
-                    return true;
-                }
-            }
-            //Diagonal win right-to-left
-            for (int i = 0; i < boardLength - 18; i++) {
-                if (board[i] == '1' && board[i + 7] == '1' && board[i + 13] == '1' && board[i + 18] == '1') {
-                    return true;
-                }
-            }
+    public static boolean winCheck(StringBuilder playerMoves) {
+        BigInteger realBoard = new BigInteger(String.valueOf(playerMoves), 2);
+
+        BigInteger vertStep1 = realBoard.shiftRight(1);
+        BigInteger vertStep2 = realBoard.shiftRight(2);
+        BigInteger vertStep3 = realBoard.shiftRight(3);
+
+        String vertResult = realBoard.and(vertStep1).and(vertStep2).and(vertStep3).toString(2);
+        if (vertResult.contains("1")) {
+            return true;
+        }
+
+        BigInteger horizStep1 = realBoard.shiftRight(9);
+        BigInteger horizStep2 = realBoard.shiftRight(18);
+        BigInteger horizStep3 = realBoard.shiftRight(27);
+        String horizResult = realBoard.and(horizStep1).and(horizStep2).and(horizStep3).toString(2);
+        if (horizResult.contains("1")) {
+            return true;
+        }
+
+        BigInteger diagLTRStep1 = realBoard.shiftRight(10);
+        BigInteger diagLTRStep2 = diagLTRStep1.shiftRight(10);
+        BigInteger diagLTRStep3 = diagLTRStep2.shiftRight(10);
+        String diagLTRResult = realBoard.and(diagLTRStep1).and(diagLTRStep2).and(diagLTRStep3).toString(2);
+        if (diagLTRResult.contains("1")) {
+            return true;
+        }
+
+        BigInteger diagRTLStep1 = realBoard.shiftRight(8);
+        BigInteger diagRTLStep2 = diagLTRStep1.shiftRight(8);
+        BigInteger diagRTLStep3 = diagLTRStep2.shiftRight(8);
+        String diagRTLResult = realBoard.and(diagRTLStep1).and(diagRTLStep2).and(diagRTLStep3).toString(2);
+        if (diagRTLResult.contains("1")) {
+            return true;
         }
         return false;
     }
-
-    private HashSet<StringBuilder> makeBitBoard(Board board) {
+    private List<StringBuilder> makeBitBoard(Board board) {
         StringBuilder boardState = new StringBuilder();
         StringBuilder XState = new StringBuilder();
         try {
             Method getCounterBoard = board.getClass().getDeclaredMethod("getCounterPlacements");
             Counter[][] counters = (Counter[][]) getCounterBoard.invoke(board);
-            List<List<Counter>> columns = Arrays.stream(counters)
-                    .map(Arrays::asList).toList();
+            List<List<Counter>> columns = Arrays.stream(counters).map(Arrays::asList).toList();
             for (List<Counter> row : columns) {
                 List<Character> emptyList = row.stream().map(c -> c == null ? '0' : '1').toList();
                 List<Character> XList = row.stream().map(c -> c != null && Objects.equals(c.getStringRepresentation(), "X") ? '1' : '0').toList();
@@ -74,20 +73,20 @@ public class AIrJordan extends Player {
                 for (Character c : XList) {
                     XString.append(c);
                 }
-                XState.append(XString);
-                boardState.append(emptyString);
+                XState.append(XString).append("0");
+                boardState.append(emptyString).append("0");
 
             }
         } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
-        StringBuilder OMoves = new StringBuilder();
+        StringBuilder OState = new StringBuilder();
         for (int i = 0; i < boardState.length(); i++) {
-            OMoves.append(boardState.charAt(i) ^ XState.charAt(i));
+            OState.append(boardState.charAt(i) ^ XState.charAt(i));
         }
-        HashSet<StringBuilder> boardMap = new HashSet<>(2);
+        List<StringBuilder> boardMap = new ArrayList<>(2);
         boardMap.add(XState);
-        boardMap.add(OMoves);
+        boardMap.add(OState);
         return boardMap;
     }
 
@@ -131,7 +130,8 @@ public class AIrJordan extends Player {
     }
 
     private int minimax(Board board, int depth, int alpha, int beta, boolean maximizingPlayer) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        if (depth == 0 || winCheck(makeBitBoard(board))) {
+        List<StringBuilder> bitBoard = makeBitBoard(board);
+        if (depth == 0 || winCheck(bitBoard.get(0)) || winCheck(bitBoard.get(1))) {
             return evaluateBoard(board);
         }
 
