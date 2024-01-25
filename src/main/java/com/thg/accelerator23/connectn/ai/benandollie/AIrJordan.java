@@ -1,9 +1,6 @@
 package com.thg.accelerator23.connectn.ai.benandollie;
 
-import com.thehutgroup.accelerator.connectn.player.Board;
-import com.thehutgroup.accelerator.connectn.player.Counter;
-import com.thehutgroup.accelerator.connectn.player.Player;
-import com.thehutgroup.accelerator.connectn.player.Position;
+import com.thehutgroup.accelerator.connectn.player.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -160,7 +157,8 @@ public class AIrJordan extends Player {
                 Position position = new Position(col, 7);
 
                 if (isValidMove(board, position)) {
-                    Board newBoard = board;
+                    GameConfig newConfig = new GameConfig(10, 8, 4);
+                    Board newBoard = new Board(newConfig);
                     Method placeCounter = board.getClass().getDeclaredMethod("placeCounterAtPosition", Counter.class, int.class);
                     placeCounter.setAccessible(true);
                     placeCounter.invoke(newBoard, counter, col);
