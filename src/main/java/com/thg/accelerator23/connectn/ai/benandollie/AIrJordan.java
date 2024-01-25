@@ -1,5 +1,6 @@
 package com.thg.accelerator23.connectn.ai.benandollie;
 
+
 import com.thehutgroup.accelerator.connectn.player.Board;
 import com.thehutgroup.accelerator.connectn.player.Counter;
 import com.thehutgroup.accelerator.connectn.player.Player;
@@ -50,16 +51,15 @@ public class AIrJordan extends Player {
         BigInteger diagRTLStep2 = diagLTRStep1.shiftRight(8);
         BigInteger diagRTLStep3 = diagLTRStep2.shiftRight(8);
         String diagRTLResult = realBoard.and(diagRTLStep1).and(diagRTLStep2).and(diagRTLStep3).toString(2);
-        if (diagRTLResult.contains("1")) {
-            return true;
-        }
-        return false;
+        return diagRTLResult.contains("1");
     }
+
     private List<StringBuilder> makeBitBoard(Board board) {
         StringBuilder boardState = new StringBuilder();
         StringBuilder XState = new StringBuilder();
         try {
             Method getCounterBoard = board.getClass().getDeclaredMethod("getCounterPlacements");
+            getCounterBoard.setAccessible(true);
             Counter[][] counters = (Counter[][]) getCounterBoard.invoke(board);
             List<List<Counter>> columns = Arrays.stream(counters).map(Arrays::asList).toList();
             for (List<Counter> row : columns) {
@@ -84,17 +84,18 @@ public class AIrJordan extends Player {
         for (int i = 0; i < boardState.length(); i++) {
             OState.append(boardState.charAt(i) ^ XState.charAt(i));
         }
-        List<StringBuilder> boardMap = new ArrayList<>(2);
+        List<StringBuilder> boardMap = new ArrayList<>(3);
         boardMap.add(XState);
         boardMap.add(OState);
+        boardMap.add(boardState);
         return boardMap;
     }
 
-    private String tryNextMove(String startBoard) {
-        StringBuilder endBoard = new StringBuilder(startBoard);
-        endBoard.setCharAt(34, 'X');
-        return String.valueOf(endBoard);
-    }
+//    private String tryNextMove(String startBoard) {
+//        StringBuilder endBoard = new StringBuilder(startBoard);
+//        endBoard.setCharAt(34, 'X');
+//        return String.valueOf(endBoard);
+//    }
 
     private int makeRandomMove(Board board) {
         int column = (int) (Math.random() * 9) + 1;
@@ -106,6 +107,12 @@ public class AIrJordan extends Player {
             }
         }
     }
+
+    //for a vertical win move (i) to be 'valid', i-1, i-2 and i-3 must all be 1
+    //for a horizontal or diagonal win move (i) to be 'valid', i-x for range 0-(i-1) must all be 1
+    //'valid' means that the move would achieve the required result, not that it is within the rules
+    //bottom row is 8*(col-1)
+    //top row is (7 + 8*col-1)
 
     @Override
     public int makeMove(Board board) {
@@ -126,7 +133,7 @@ public class AIrJordan extends Player {
                 break;
             }
         }
-        return bestMove;
+        return makeRandomMove(board);
     }
 
     private int minimax(Board board, int depth, int alpha, int beta, boolean maximizingPlayer) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
