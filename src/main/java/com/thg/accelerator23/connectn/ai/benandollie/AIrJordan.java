@@ -1,6 +1,5 @@
 package com.thg.accelerator23.connectn.ai.benandollie;
 
-
 import com.thehutgroup.accelerator.connectn.player.Board;
 import com.thehutgroup.accelerator.connectn.player.Counter;
 import com.thehutgroup.accelerator.connectn.player.Player;
@@ -120,40 +119,39 @@ public class AIrJordan extends Player {
         int bestMove = -1;
 
         for (int depth = 1; depth <= MAX_DEPTH; depth++) {
-            int currentBestMove = 0;
+            MoveResult result = null;
             try {
-                currentBestMove = minimax(board, depth, Integer.MIN_VALUE, Integer.MAX_VALUE, true);
+                result = minimax(board, depth, Integer.MIN_VALUE, Integer.MAX_VALUE, true);
             } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
             long maxSearchTime = 700;
             if (System.currentTimeMillis() - startTime < maxSearchTime) {
-                bestMove = currentBestMove;
+                bestMove = result.move;
             } else {
                 break;
             }
         }
-        return makeRandomMove(board);
+        return bestMove;
     }
 
-    private int minimax(Board board, int depth, int alpha, int beta, boolean maximizingPlayer) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        List<StringBuilder> bitBoard = makeBitBoard(board);
-        if (depth == 0 || winCheck(bitBoard.get(0)) || winCheck(bitBoard.get(1))) {
-            return evaluateBoard(board);
+    private MoveResult minimax(Board board, int depth, int alpha, int beta, boolean maximizingPlayer) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        if (depth == 0 || winCheck(makeBitBoard(board).get(0)) || winCheck(makeBitBoard(board).get(1))) {
+            int evaluation = evaluateBoard(board);
+            return new MoveResult(-1, evaluation);
         }
 
+        int bestMove = -1;
         int bestEval = maximizingPlayer ? Integer.MIN_VALUE : Integer.MAX_VALUE;
 
-        for (int col = 1; col <= board.getConfig().getWidth(); col++) {
+        for (int col = 0; col <= board.getConfig().getWidth(); col++) {
             if (board.isWithinBoard(new Position(col, 7))) {
 
                 Counter counter = null;
                 if (maximizingPlayer) {
                     counter = this.getCounter();
                 } else {
-                    if (Objects.equals(this.getCounter().getStringRepresentation(), "X")) {
-                        counter = Counter.valueOf("O");
-                    }
+                    counter = Objects.equals(this.getCounter().getStringRepresentation(), "X") ? Counter.O : Counter.X; // Counter.valueOf("O");
                 }
 
                 Position position = new Position(col, 7);
@@ -164,22 +162,29 @@ public class AIrJordan extends Player {
                     placeCounter.setAccessible(true);
                     placeCounter.invoke(newBoard, counter, col);
 
-                    int eval = minimax(newBoard, depth - 1, alpha, beta, !maximizingPlayer);
+                    int eval = minimax(newBoard, depth - 1, alpha, beta, !maximizingPlayer).evaluation;
 
                     if (maximizingPlayer) {
-                        bestEval = Math.max(bestEval, eval);
+                        if (eval > bestEval) {
+                            bestEval = eval;
+                            bestMove = col;
+                        }
                         alpha = Math.max(alpha, eval);
                     } else {
-                        bestEval = Math.min(bestEval, eval);
+                        if (eval < bestEval) {
+                            bestEval = eval;
+                            bestMove = col;
+                        }
                         beta = Math.min(beta, eval);
                     }
+
                     if (beta <= alpha) {
                         break;
                     }
                 }
             }
         }
-        return bestEval;
+        return new MoveResult(bestMove, bestEval);
     }
 
     private int evaluateBoard(Board board) {
