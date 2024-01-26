@@ -1,18 +1,29 @@
 package com.thg.accelerator23.connectn.ai.benandollie;
 
-import com.thehutgroup.accelerator.connectn.player.*;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import com.thehutgroup.accelerator.connectn.player.Board;
+import com.thehutgroup.accelerator.connectn.player.Counter;
+import com.thehutgroup.accelerator.connectn.player.Player;
+import com.thehutgroup.accelerator.connectn.player.Position;
+
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
 
 public class AIrJordan extends Player {
-    private static final int MAX_DEPTH = 10;
+    int counterIndex;
+
 
     public AIrJordan(Counter counter) {
         super(counter, "AIrJordan");
+        if (counter.getStringRepresentation() == "X") {
+            counterIndex = 0;
+        } else {
+            counterIndex = 1;
+        }
     }
 
     public static boolean winCheck(StringBuilder playerMoves) {
@@ -53,29 +64,23 @@ public class AIrJordan extends Player {
     private List<StringBuilder> makeBitBoard(Board board) {
         StringBuilder boardState = new StringBuilder();
         StringBuilder XState = new StringBuilder();
-        try {
-            Method getCounterBoard = board.getClass().getDeclaredMethod("getCounterPlacements");
-            getCounterBoard.setAccessible(true);
-            Counter[][] counters = (Counter[][]) getCounterBoard.invoke(board);
-            List<List<Counter>> columns = Arrays.stream(counters).map(Arrays::asList).toList();
-            for (List<Counter> row : columns) {
-                List<Character> emptyList = row.stream().map(c -> c == null ? '0' : '1').toList();
-                List<Character> XList = row.stream().map(c -> c != null && Objects.equals(c.getStringRepresentation(), "X") ? '1' : '0').toList();
-                StringBuilder emptyString = new StringBuilder();
-                StringBuilder XString = new StringBuilder();
-                for (Character c : emptyList) {
-                    emptyString.append(c);
-                }
-                for (Character c : XList) {
-                    XString.append(c);
-                }
-                XState.append(XString).append("0");
-                boardState.append(emptyString).append("0");
-
+        List<List<Counter>> columns = Arrays.stream(board.getCounterPlacements()).map(Arrays::asList).toList();
+        for (List<Counter> row : columns) {
+            List<Character> emptyList = row.stream().map(c -> c == null ? '0' : '1').toList();
+            List<Character> XList = row.stream().map(c -> c != null && Objects.equals(c.getStringRepresentation(), "X") ? '1' : '0').toList();
+            StringBuilder emptyString = new StringBuilder();
+            StringBuilder XString = new StringBuilder();
+            for (Character c : emptyList) {
+                emptyString.append(c);
             }
-        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-            throw new RuntimeException(e);
+            for (Character c : XList) {
+                XString.append(c);
+            }
+            XState.append(XString).append("0");
+            boardState.append(emptyString).append("0");
+
         }
+
         StringBuilder OState = new StringBuilder();
         for (int i = 0; i < boardState.length(); i++) {
             OState.append(boardState.charAt(i) ^ XState.charAt(i));
@@ -87,115 +92,46 @@ public class AIrJordan extends Player {
         return boardMap;
     }
 
-//    private String tryNextMove(String startBoard) {
-//        StringBuilder endBoard = new StringBuilder(startBoard);
-//        endBoard.setCharAt(34, 'X');
-//        return String.valueOf(endBoard);
-//    }
 
     private int makeRandomMove(Board board) {
         int column = (int) (Math.random() * 9) + 1;
         while (true) {
-
             if (!board.hasCounterAtPosition(new Position(column, 7))) {
-                System.out.println(column);
                 return column;
             }
         }
     }
 
-    //for a vertical win move (i) to be 'valid', i-1, i-2 and i-3 must all be 1
-    //for a horizontal or diagonal win move (i) to be 'valid', i-x for range 0-(i-1) must all be 1
-    //'valid' means that the move would achieve the required result, not that it is within the rules
-    //bottom row is 8*(col-1)
-    //top row is (7 + 8*col-1)
 
     @Override
     public int makeMove(Board board) {
-        long startTime = System.currentTimeMillis();
-        int bestMove = -1;
-
-        for (int depth = 1; depth <= MAX_DEPTH; depth++) {
-            MoveResult result = null;
-            try {
-                result = minimax(board, depth, Integer.MIN_VALUE, Integer.MAX_VALUE, true);
-            } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-            long maxSearchTime = 700;
-            if (System.currentTimeMillis() - startTime < maxSearchTime) {
-                bestMove = result.move;
-            } else {
-                break;
-            }
-        }
-        if (bestMove == -1 || !isValidMove(board, new Position(bestMove, 7))) {
-            return makeRandomMove(board);
-        }
+        List<StringBuilder> bitBoard = makeBitBoard(board);
+        int bestMove;
+        int columnOutcome = tryColumns(bitBoard, counterIndex, 2);
+        if (columnOutcome == -1) {
+            bestMove = makeRandomMove(board);
+        } else bestMove = columnOutcome;
         return bestMove;
     }
 
-    private MoveResult minimax(Board board, int depth, int alpha, int beta, boolean maximizingPlayer) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        if (depth == 0 || winCheck(makeBitBoard(board).get(0)) || winCheck(makeBitBoard(board).get(1))) {
-            int evaluation = evaluateBoard(board);
-            return new MoveResult(-1, evaluation);
-        }
-
-        int bestMove = -1;
-        int bestEval = maximizingPlayer ? Integer.MIN_VALUE : Integer.MAX_VALUE;
-
-        for (int col = 0; col <= board.getConfig().getWidth(); col++) {
-            if (board.isWithinBoard(new Position(col, 7))) {
-
-                Counter counter = null;
-                if (maximizingPlayer) {
-                    counter = this.getCounter();
-                } else {
-                    counter = Objects.equals(this.getCounter().getStringRepresentation(), "X") ? Counter.O : Counter.X; // Counter.valueOf("O");
+    int tryColumns(List<StringBuilder> bitBoard, int playerIndex, int depth) {
+        StringBuilder playerMoves = bitBoard.get(playerIndex);
+        StringBuilder emptySquares = bitBoard.get(2);
+        for (int i = 0; i <= depth; i++)
+            for (int col = 0; col < 10; col++) {
+                int firstEmpty = emptySquares.substring(9 * (col), 8 + (9 * (col))).indexOf("0");
+                if (firstEmpty < 9) {
+                    playerMoves.setCharAt(((col * 9) + firstEmpty), '1');
                 }
-
-                Position position = new Position(col, 7);
-
-                if (isValidMove(board, position)) {
-                    GameConfig newConfig = new GameConfig(10, 8, 4);
-                    Board newBoard = new Board(newConfig);
-                    Method placeCounter = board.getClass().getDeclaredMethod("placeCounterAtPosition", Counter.class, int.class);
-                    placeCounter.setAccessible(true);
-                    placeCounter.invoke(newBoard, counter, col);
-
-                    int eval = minimax(newBoard, depth - 1, alpha, beta, !maximizingPlayer).evaluation;
-
-                    if (maximizingPlayer) {
-                        if (eval > bestEval) {
-                            bestEval = eval;
-                            bestMove = col;
-                        }
-                        alpha = Math.max(alpha, eval);
-                    } else {
-                        if (eval < bestEval) {
-                            bestEval = eval;
-                            bestMove = col;
-                        }
-                        beta = Math.min(beta, eval);
-                    }
-
-                    if (beta <= alpha) {
-                        break;
-                    }
+                if (winCheck(playerMoves)) {
+                    return col;
                 }
+                playerMoves.setCharAt(((col * 9) + firstEmpty), '0');
             }
-        }
-        return new MoveResult(bestMove, bestEval);
+        return -1;
     }
-
-    private int evaluateBoard(Board board) {
-
-        return 0;
-    }
-
-    private boolean isValidMove(Board board, Position position) {
-        return board.isWithinBoard(position) && !board.hasCounterAtPosition(position);
-    }
-
 }
+
+
+
 
